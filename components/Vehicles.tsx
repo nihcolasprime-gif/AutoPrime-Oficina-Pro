@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAutoPrime } from '../context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
-import { Plus, Edit2, Trash2, Car, Calendar, User } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, User, Clock } from 'lucide-react';
 import { Vehicle } from '../types';
 
 export const Vehicles = () => {
@@ -29,11 +29,10 @@ export const Vehicles = () => {
         modelo: vehicle.modelo,
         clienteId: vehicle.clienteId,
         kmEntrada: vehicle.kmEntrada,
-        dataUltimaManutencao: vehicle.dataUltimaManutencao
+        dataUltimaManutencao: vehicle.dataUltimaManutencao ? new Date(vehicle.dataUltimaManutencao).toISOString().split('T')[0] : ''
       });
     } else {
       setEditingVehicle(null);
-      // If there are clients, select the first one by default to avoid empty selects
       setFormData({ ...initialFormState, clienteId: clients.length > 0 ? clients[0].id : '' });
     }
     setIsModalOpen(true);
@@ -53,6 +52,26 @@ export const Vehicles = () => {
       });
     }
     setIsModalOpen(false);
+  };
+
+  const getStatusColor = (dateStr?: string) => {
+      if (!dateStr) return 'text-slate-700';
+      const due = new Date(dateStr);
+      const today = new Date();
+      const diffTime = due.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) return 'text-red-600 font-bold'; // Vencido
+      if (diffDays < 30) return 'text-amber-600 font-bold'; // Próximo
+      return 'text-green-600'; // OK
+  };
+
+  const getStatusText = (dateStr?: string) => {
+      if (!dateStr) return '---';
+      const due = new Date(dateStr);
+      const today = new Date();
+      if (due < today) return 'VENCIDO';
+      return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
   return (
@@ -112,19 +131,19 @@ export const Vehicles = () => {
               <div className="grid grid-cols-2 gap-2 mt-2 bg-slate-50 p-2 rounded">
                 <div>
                     <p className="text-xs text-slate-400">KM Atual</p>
-                    <p className="font-medium text-slate-700">{vehicle.kmEntrada} km</p>
+                    <p className="font-medium text-slate-700">{vehicle.kmAtual} km</p>
                 </div>
                 <div>
-                    <p className="text-xs text-slate-400">Próx. Manutenção</p>
-                    <p className={`font-medium ${vehicle.kmProximaManutencao - vehicle.kmEntrada <= 500 ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
-                        {vehicle.kmProximaManutencao} km
+                    <p className="text-xs text-slate-400">Próx. Revisão (Est.)</p>
+                    <p className={`font-medium ${getStatusColor(vehicle.dataProximaManutencao)}`}>
+                        {getStatusText(vehicle.dataProximaManutencao)}
                     </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
                 <Calendar size={14} /> 
-                <span>Última revisão: {new Date(vehicle.dataUltimaManutencao).toLocaleDateString('pt-BR')}</span>
+                <span>Última revisão: {vehicle.dataUltimaManutencao ? new Date(vehicle.dataUltimaManutencao).toLocaleDateString('pt-BR') : 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -144,7 +163,7 @@ export const Vehicles = () => {
                 className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-brand-500 outline-none bg-white"
                 value={formData.clienteId}
                 onChange={e => setFormData({...formData, clienteId: e.target.value})}
-                disabled={!!editingVehicle} // Lock owner on edit or allow change? Usually lock.
+                disabled={!!editingVehicle}
             >
                 {clients.map(c => (
                     <option key={c.id} value={c.id}>{c.nome}</option>

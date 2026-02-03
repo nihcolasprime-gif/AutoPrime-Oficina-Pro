@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { Client, Vehicle, Part, ServiceOrder, Log, Alert, MaintenanceRule, DashboardMetrics } from '../types';
 
@@ -19,7 +18,7 @@ interface AutoPrimeContextData {
   updateClient: (id: string, data: Partial<Client>) => void;
   deleteClient: (id: string) => void;
 
-  addVehicle: (vehicle: Omit<Vehicle, 'id' | 'kmAtual' | 'historicoKm' | 'kmProximaManutencao'>) => void;
+  addVehicle: (vehicle: Omit<Vehicle, 'id' | 'kmAtual' | 'historicoKm' | 'dataProximaManutencao'>) => void;
   updateVehicle: (id: string, data: Partial<Vehicle>) => void;
   deleteVehicle: (id: string) => void;
 
@@ -68,12 +67,12 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [logs, setLogs] = useState<Log[]>(() => getInitialState('logs', []));
   const [currentView, setCurrentView] = useState<string>(() => getInitialState('currentView', 'dashboard'));
   
-  // Novas regras de manutenção (Inteligência configurável)
+  // Novas regras de manutenção (Baseado em TEMPO agora)
   const [maintenanceRules, setMaintenanceRules] = useState<MaintenanceRule[]>(() => 
     getInitialState('maintenanceRules', [
-      { id: 'rule-1', nomeServico: 'Troca de Óleo', intervaloKm: 5000, avisoAntesKm: 500 },
-      { id: 'rule-2', nomeServico: 'Alinhamento', intervaloKm: 10000, avisoAntesKm: 1000 },
-      { id: 'rule-3', nomeServico: 'Correia Dentada', intervaloKm: 50000, avisoAntesKm: 2000 }
+      { id: 'rule-1', nomeServico: 'Troca de Óleo', intervaloMeses: 6 },
+      { id: 'rule-2', nomeServico: 'Alinhamento', intervaloMeses: 12 },
+      { id: 'rule-3', nomeServico: 'Correia Dentada', intervaloMeses: 36 }
     ])
   );
 
@@ -96,6 +95,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   // 1. Alertas Derivados
   const alerts = useMemo(() => {
     const newAlerts: Alert[] = [];
+    const today = new Date();
 
     // Estoque
     inventory.forEach(part => {
@@ -109,53 +109,62 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     });
 
-    // Manutenção Inteligente
+    // Manutenção Inteligente (Baseada em DATA, CLIENTE e VEÍCULO ESPECÍFICO)
     vehicles.forEach(vehicle => {
+      const client = clients.find(c => c.id === vehicle.clienteId);
+      
       maintenanceRules.forEach(rule => {
-        // Encontrar a última OS que conteha este serviço para este veículo
+        // --- NOVO: Filtragem por Veículo Específico ---
+        // Se a regra tiver um veiculoId e não for igual ao ID do veículo atual do loop, ignoramos.
+        if (rule.veiculoId && rule.veiculoId !== vehicle.id) {
+            return;
+        }
+
+        // Encontrar a última OS válida para este serviço
         const lastOS = serviceOrders
           .filter(os => os.veiculoId === vehicle.id && os.status === 'CONCLUIDA' && os.servicos.some(s => s.nome === rule.nomeServico))
           .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0];
 
-        let lastKm = lastOS ? lastOS.kmNoServico : 0; // Se nunca fez, assume 0? Ou assume kmEntrada?
-        
-        // Se nunca fez o serviço no sistema, vamos considerar a entrada do veículo se ele tiver mais KM que o intervalo
-        // Isso é uma heurística: se o carro entrou com 60k e a regra é 50k, e não tem OS, alerta!
-        if (!lastOS && vehicle.kmEntrada > rule.intervaloKm) {
-             // Estratégia conservadora: se não tem histórico, alerta baseado no KM total atual
-             // Assumindo que pode nunca ter sido feito.
-             lastKm = 0; 
-        } else if (!lastOS) {
-             lastKm = vehicle.kmEntrada;
-        }
+        // Determinar data base (Última OS ou Cadastro do Veículo)
+        let baseDateStr = lastOS ? lastOS.data : vehicle.dataUltimaManutencao;
+        if (!baseDateStr) baseDateStr = new Date().toISOString(); // Fallback
 
-        const nextMaintenanceKm = lastKm + rule.intervaloKm;
-        const remainingKm = nextMaintenanceKm - vehicle.kmAtual;
+        const baseDate = new Date(baseDateStr);
+        const nextDate = new Date(baseDate);
+        nextDate.setMonth(baseDate.getMonth() + rule.intervaloMeses);
 
-        if (remainingKm <= 0) {
+        // Diferença em dias
+        const diffTime = nextDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
           newAlerts.push({
             id: `maint-crit-${vehicle.id}-${rule.id}`,
             type: 'MANUTENCAO',
             severity: 'critical',
-            message: `${rule.nomeServico} VENCIDO: ${vehicle.modelo} (${vehicle.placa})`,
+            message: `${rule.nomeServico} VENCIDO - ${vehicle.modelo} (${vehicle.placa})`,
             veiculoId: vehicle.id,
-            regraId: rule.id
+            regraId: rule.id,
+            clientName: client ? client.nome : 'Cliente Desconhecido',
+            clientPhone: client ? client.telefone : ''
           });
-        } else if (remainingKm <= rule.avisoAntesKm) {
+        } else if (diffDays <= 30) {
           newAlerts.push({
             id: `maint-warn-${vehicle.id}-${rule.id}`,
             type: 'MANUTENCAO',
             severity: 'warning',
-            message: `${rule.nomeServico} próximo (${remainingKm}km): ${vehicle.modelo}`,
+            message: `${rule.nomeServico} vence em ${diffDays} dias - ${vehicle.modelo}`,
             veiculoId: vehicle.id,
-            regraId: rule.id
+            regraId: rule.id,
+            clientName: client ? client.nome : 'Cliente Desconhecido',
+            clientPhone: client ? client.telefone : ''
           });
         }
       });
     });
 
     return newAlerts;
-  }, [inventory, vehicles, maintenanceRules, serviceOrders]);
+  }, [inventory, vehicles, maintenanceRules, serviceOrders, clients]);
 
   // 2. Métricas Derivadas
   const metrics = useMemo<DashboardMetrics>(() => {
@@ -210,7 +219,6 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
     addLog('EDICAO', 'CLIENTE', `Cliente ${id} editado.`);
   };
   const deleteClient = (id: string) => {
-    // Soft delete preferido, mas seguindo requisito de exclusão
     const linkedVehicles = vehicles.filter(v => v.clienteId === id).map(v => v.id);
     setServiceOrders(prev => prev.filter(os => !linkedVehicles.includes(os.veiculoId)));
     setVehicles(prev => prev.filter(v => v.clienteId !== id));
@@ -219,12 +227,15 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   // Vehicles
-  const addVehicle = (data: Omit<Vehicle, 'id' | 'kmAtual' | 'historicoKm' | 'kmProximaManutencao'>) => {
+  const addVehicle = (data: Omit<Vehicle, 'id' | 'kmAtual' | 'historicoKm' | 'dataProximaManutencao'>) => {
+    const nextDate = new Date();
+    nextDate.setMonth(nextDate.getMonth() + 6); // Default 6 meses
+
     const newVehicle: Vehicle = { 
       ...data, 
       id: generateUUID(), 
       kmAtual: data.kmEntrada, 
-      kmProximaManutencao: data.kmEntrada + 5000,
+      dataProximaManutencao: nextDate.toISOString(),
       historicoKm: [{ data: new Date().toISOString(), km: data.kmEntrada, origem: 'Cadastro' }] 
     };
     setVehicles(prev => [...prev, newVehicle]);
@@ -269,7 +280,6 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Service Orders
   const addServiceOrder = (data: Omit<ServiceOrder, 'id' | 'valorTotal' | 'status'>) => {
-    // Calcular Total
     const totalPecas = data.pecasUsadas.reduce((acc, p) => acc + (p.quantidade * p.valorUnitarioSnapshot), 0);
     const totalServicos = data.servicos.reduce((acc, s) => acc + s.valor, 0);
     const total = totalPecas + totalServicos;
@@ -278,7 +288,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
       ...data,
       id: generateUUID(),
       valorTotal: total,
-      status: 'CONCLUIDA' // Simplificado para este modelo
+      status: 'CONCLUIDA'
     };
 
     setServiceOrders(prev => [...prev, newOS]);
@@ -289,16 +299,18 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
       return used ? { ...part, quantidadeAtual: part.quantidadeAtual - used.quantidade } : part;
     }));
 
-    // Atualiza Veículo (KM e Histórico)
+    // Atualiza Veículo
     setVehicles(prev => prev.map(v => {
       if (v.id === data.veiculoId) {
-        // Regra de Integridade: KM só aumenta
+        const nextDate = new Date(data.data);
+        nextDate.setMonth(nextDate.getMonth() + 6);
+
         const newKm = Math.max(v.kmAtual, data.kmNoServico);
         return {
           ...v,
           kmAtual: newKm,
-          kmProximaManutencao: newKm + 5000,
           dataUltimaManutencao: data.data,
+          dataProximaManutencao: nextDate.toISOString(),
           historicoKm: [...v.historicoKm, { data: data.data, km: data.kmNoServico, origem: `OS #${newOS.id.slice(0,4)}` }]
         };
       }
@@ -313,7 +325,6 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
     addLog('EXCLUSAO', 'OS', `OS ${id} removida.`);
   };
 
-  // --- PDF GENERATOR ---
   const generateOSPDF = (osId: string) => {
     const os = serviceOrders.find(o => o.id === osId);
     if (!os) return;
@@ -325,22 +336,32 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
         <head>
           <title>Ordem de Serviço #${os.id.slice(0, 8)}</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Yellowtail&display=swap');
             body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #003366; padding-bottom: 20px; background: #f8fafc; padding-top: 20px; }
+            .brand-name { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; }
+            .prime { font-family: 'Montserrat', sans-serif; font-weight: 900; font-style: italic; font-size: 32px; color: #003366; }
+            .car { font-family: 'Yellowtail', cursive; font-size: 38px; color: #d97706; }
+            .subtitle { font-size: 14px; font-weight: bold; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
             .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
             .box { background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #eee; }
-            .total { text-align: right; margin-top: 20px; font-size: 1.2em; font-weight: bold; }
+            th { background-color: #003366; color: white; }
+            .total { text-align: right; margin-top: 20px; font-size: 1.4em; font-weight: bold; color: #003366; }
+            .notes { margin-top: 30px; background: #fffbeb; border: 1px solid #fcd34d; padding: 15px; border-radius: 4px; }
             .footer { margin-top: 50px; text-align: center; font-size: 0.8em; color: #666; }
           </style>
         </head>
         <body>
           <div class="header">
-            <h1>AutoPrime Oficina Pro</h1>
-            <p>Ordem de Serviço: ${os.id}</p>
-            <p>Data: ${new Date(os.data).toLocaleDateString()} | Status: ${os.status}</p>
+            <div class="brand-name">
+                <span class="prime">PRIME</span>
+                <span class="car">Car</span>
+            </div>
+            <div class="subtitle">Mecânica do Dênis</div>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">Ordem de Serviço: <strong>${os.id}</strong></p>
+            <p style="font-size: 12px;">Data: ${new Date(os.data).toLocaleDateString()} | Status: ${os.status}</p>
           </div>
 
           <div class="info-grid">
@@ -382,6 +403,13 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
             </tbody>
           </table>
 
+          ${os.notas ? `
+            <div class="notes">
+                <h3>Observações / Relato</h3>
+                <p>${os.notas}</p>
+            </div>
+          ` : ''}
+
           <div class="total">
             Valor Total: R$ ${os.valorTotal.toFixed(2)}
           </div>
@@ -389,7 +417,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
           <div class="footer">
             <p>_____________________________________</p>
             <p>Assinatura do Cliente</p>
-            <p>AutoPrime Oficina Pro - Sistema de Gestão Inteligente</p>
+            <p>PRIME Car - Mecânica do Dênis</p>
           </div>
           <script>window.print();</script>
         </body>

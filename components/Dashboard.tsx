@@ -1,44 +1,53 @@
 import React from 'react';
 import { useAutoPrime } from '../context/AutoPrimeContext';
-import { AlertTriangle, Users, Car, Wrench, DollarSign, Activity, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Users, Car, Wrench, DollarSign, Activity, ArrowRight, User, Phone } from 'lucide-react';
 
 export const Dashboard = () => {
   const { metrics, alerts, currentView, setCurrentView } = useAutoPrime();
 
   const StatCard = ({ title, value, icon: Icon, color, subtext, onClick, actionText }: any) => (
-    <div 
-      onClick={onClick}
-      className={`bg-white p-6 rounded-lg shadow-sm border border-slate-100 flex flex-col justify-between gap-4 transition-all duration-200 ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-1 group' : ''}`}
-    >
-      <div className="flex items-center gap-4">
-        <div className={`p-4 rounded-full ${color} text-white shadow-md`}>
-          <Icon size={24} />
+    <div className="perspective-1000 h-full">
+      <div 
+        onClick={onClick}
+        className={`
+          glass-panel h-full p-6 rounded-2xl flex flex-col justify-between gap-4 
+          transition-all duration-500 transform-style-3d 
+          ${onClick ? 'cursor-pointer glass-card-hover' : ''}
+          bg-gradient-to-br from-white/80 to-white/40
+        `}
+      >
+        <div className="flex items-center gap-4 transform translate-z-10">
+          <div className={`p-4 rounded-2xl ${color} text-white shadow-lg shadow-${color.replace('bg-', '')}/30`}>
+            <Icon size={24} className="drop-shadow-md" />
+          </div>
+          <div>
+            <p className="text-slate-500 text-sm font-bold uppercase tracking-wide">{title}</p>
+            <p className="text-3xl font-black text-slate-800 tracking-tight drop-shadow-sm">{value}</p>
+            {subtext && <p className="text-xs text-slate-500 mt-1 font-medium">{subtext}</p>}
+          </div>
         </div>
-        <div>
-          <p className="text-slate-500 text-sm font-medium uppercase tracking-wide">{title}</p>
-          <p className="text-2xl font-bold text-slate-900">{value}</p>
-          {subtext && <p className="text-xs text-slate-400 mt-1">{subtext}</p>}
-        </div>
+        
+        {actionText && (
+          <div className="border-t border-slate-200/50 pt-3 mt-1 transform translate-z-10">
+            <span className="text-sm font-bold text-slate-600 group-hover:text-brand-600 flex items-center gap-2 transition-colors">
+              {actionText} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </span>
+          </div>
+        )}
       </div>
-      
-      {actionText && (
-        <div className="border-t border-slate-50 pt-3 mt-1">
-          <span className="text-sm font-semibold text-slate-600 group-hover:text-brand-600 flex items-center gap-2 transition-colors">
-            {actionText} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-          </span>
-        </div>
-      )}
     </div>
   );
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center relative z-10">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Visão Geral</h1>
-          <p className="text-slate-500">Métricas em tempo real da oficina.</p>
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-prime-blue to-prime-light mb-2 drop-shadow-sm">
+            Visão Geral
+          </h1>
+          <p className="text-slate-500 font-medium">Métricas em tempo real da oficina.</p>
         </div>
-        <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600">
+        <div className="glass-panel px-6 py-2 rounded-xl text-sm text-prime-blue font-bold shadow-sm">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
@@ -60,7 +69,7 @@ export const Dashboard = () => {
           color="bg-blue-500" 
           subtext={`Ticket Médio: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.ticketMedio)}`}
           onClick={() => setCurrentView('os')}
-          actionText="Histórico de serviços"
+          actionText="Histórico"
         />
         <StatCard 
           title="Serviços Abertos" 
@@ -82,31 +91,50 @@ export const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Alertas */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-slate-100">
+        <div className="lg:col-span-2 glass-panel p-6 rounded-2xl shadow-xl bg-white/60">
           <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-amber-500" />
+            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+               <AlertTriangle size={20} />
+            </div>
             Alertas de Manutenção & Estoque
           </h2>
           
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
             {alerts.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                <p className="text-slate-400">Nenhum alerta crítico. Tudo em ordem!</p>
+              <div className="text-center py-12 bg-slate-50/50 rounded-xl border border-dashed border-slate-300">
+                <p className="text-slate-400 font-medium">Nenhum alerta crítico. Tudo em ordem!</p>
               </div>
             ) : (
               alerts.map(alert => (
-                <div key={alert.id} className={`p-4 rounded-lg border-l-4 shadow-sm flex justify-between items-center transition-all hover:bg-opacity-80 ${
+                <div key={alert.id} className={`p-4 rounded-xl border-l-4 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center transition-all hover:scale-[1.01] hover:shadow-md backdrop-blur-sm ${
                   alert.severity === 'critical' 
-                    ? 'bg-red-50 border-red-500 text-red-700' 
+                    ? 'bg-red-50/80 border-red-500 text-red-800' 
                     : alert.severity === 'warning'
-                      ? 'bg-amber-50 border-amber-500 text-amber-700'
-                      : 'bg-blue-50 border-blue-500 text-blue-700'
+                      ? 'bg-amber-50/80 border-amber-500 text-amber-800'
+                      : 'bg-blue-50/80 border-blue-500 text-blue-800'
                 }`}>
-                  <div className="flex-1">
-                    <span className="font-bold text-xs uppercase tracking-wider block mb-1 opacity-70">
-                      {alert.type} • {alert.severity}
-                    </span>
+                  <div className="flex-1 w-full">
+                    <div className="flex justify-between items-start mb-1">
+                         <span className="font-bold text-xs uppercase tracking-wider opacity-70 flex items-center gap-1">
+                            {alert.type === 'MANUTENCAO' && <User size={12} />}
+                            {alert.type === 'MANUTENCAO' && alert.clientName ? alert.clientName : alert.type} • {alert.severity}
+                        </span>
+                        {alert.clientPhone && (
+                             <span className="text-xs bg-white/50 px-2 py-0.5 rounded-full font-mono flex items-center gap-1">
+                                <Phone size={10} /> {alert.clientPhone}
+                             </span>
+                        )}
+                    </div>
+                    
                     <p className="font-semibold text-sm md:text-base">{alert.message}</p>
+                    
+                    {alert.clientName && alert.type === 'MANUTENCAO' && (
+                        <div className="mt-2 pt-2 border-t border-black/5 text-xs flex gap-3 text-black/60">
+                             <span className="font-bold text-black/80">Ligar para cliente</span>
+                             <span>•</span>
+                             <span>Agendar Manutenção</span>
+                        </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -115,9 +143,11 @@ export const Dashboard = () => {
         </div>
 
         {/* Top Serviços */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
+        <div className="glass-panel p-6 rounded-2xl shadow-xl bg-white/60">
           <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <Activity className="text-indigo-500" />
+            <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                <Activity size={20} />
+            </div>
             Serviços Populares
           </h2>
           <div className="space-y-4">
@@ -125,9 +155,9 @@ export const Dashboard = () => {
                <p className="text-slate-400 text-center py-4">Sem dados suficientes.</p>
             ) : (
               metrics.topServicos.map((serv, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div key={idx} className="flex items-center justify-between p-3 bg-white/50 rounded-xl border border-white/40 shadow-sm hover:shadow-md transition-shadow">
                   <span className="font-medium text-slate-700">{serv.nome}</span>
-                  <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-xs font-bold">
+                  <span className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-1 px-3 rounded-full text-xs font-bold shadow-md">
                     {serv.qtd}x
                   </span>
                 </div>

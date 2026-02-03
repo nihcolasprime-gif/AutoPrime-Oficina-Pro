@@ -16,6 +16,7 @@ export const ServiceOrders = () => {
   const [selectedClientId, setSelectedClientId] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [kmNoServico, setKmNoServico] = useState(0);
+  const [tempNotes, setTempNotes] = useState('');
   
   // Lists
   const [selectedParts, setSelectedParts] = useState<UsedPart[]>([]);
@@ -35,6 +36,7 @@ export const ServiceOrders = () => {
     setSelectedClientId('');
     setSelectedVehicleId('');
     setKmNoServico(0);
+    setTempNotes('');
     setSelectedParts([]);
     setSelectedServices([]);
     setTempPartId('');
@@ -80,7 +82,8 @@ export const ServiceOrders = () => {
         kmNoServico,
         pecasUsadas: selectedParts,
         servicos: selectedServices,
-        data: new Date().toISOString()
+        data: new Date().toISOString(),
+        notas: tempNotes
     });
 
     setIsModalOpen(false);
@@ -170,6 +173,13 @@ export const ServiceOrders = () => {
                         </div>
                     </div>
 
+                    {os.notas && (
+                        <div className="mb-4 p-3 bg-amber-50 rounded border border-amber-100">
+                            <p className="text-xs font-bold text-amber-800 uppercase mb-1">Observações</p>
+                            <p className="text-sm text-slate-700 italic">{os.notas}</p>
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-3 pt-2">
                         <button 
                             onClick={() => generateOSPDF(os.id)}
@@ -257,6 +267,17 @@ export const ServiceOrders = () => {
                     </li>
                 ))}
             </ul>
+          </div>
+
+          <div className="border-t border-slate-100 pt-2">
+             <label className="block text-sm font-medium text-slate-700 mb-1">Observações / Descrição</label>
+             <textarea 
+                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-brand-500 outline-none text-sm"
+                rows={3}
+                placeholder="Detalhes adicionais, problemas relatados pelo cliente, etc..."
+                value={tempNotes}
+                onChange={e => setTempNotes(e.target.value)}
+             />
           </div>
 
           <div className="flex items-center justify-between border-t pt-4">
