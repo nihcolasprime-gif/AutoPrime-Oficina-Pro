@@ -7,6 +7,7 @@ import { Vehicles } from './components/Vehicles';
 import { Inventory } from './components/Inventory';
 import { ServiceOrders } from './components/ServiceOrders';
 import { Settings } from './components/Settings';
+import { Financial } from './components/Financial';
 
 const ViewManager: React.FC = () => {
   const { currentView } = useAutoPrime();
@@ -17,6 +18,7 @@ const ViewManager: React.FC = () => {
     case 'vehicles': return <Vehicles />;
     case 'inventory': return <Inventory />;
     case 'os': return <ServiceOrders />;
+    case 'financial': return <Financial />;
     case 'settings': return <Settings />;
     default: return <Dashboard />;
   }

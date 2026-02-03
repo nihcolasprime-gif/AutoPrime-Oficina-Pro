@@ -66,11 +66,21 @@ export interface MaintenanceRule {
   veiculoId?: string; // Opcional: Se definido, regra vale apenas para este veículo
 }
 
+export interface Transaction {
+  id: string;
+  descricao: string;
+  tipo: 'RECEITA' | 'DESPESA';
+  valor: number;
+  data: string; // ISO Date
+  categoria: 'OS' | 'ESTOQUE' | 'ALUGUEL' | 'CONTAS' | 'PESSOAL' | 'OUTROS';
+  referenciaId?: string; // ID da OS ou da Peça (para exclusão em cascata)
+}
+
 export interface Log {
   id: string;
   timestamp: string;
   acao: 'CRIACAO' | 'EDICAO' | 'EXCLUSAO' | 'CONFIG';
-  entidade: 'CLIENTE' | 'VEICULO' | 'ESTOQUE' | 'OS' | 'REGRA';
+  entidade: 'CLIENTE' | 'VEICULO' | 'ESTOQUE' | 'OS' | 'REGRA' | 'FINANCEIRO';
   detalhes: string;
 }
 
