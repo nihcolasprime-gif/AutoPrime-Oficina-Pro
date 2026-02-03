@@ -1,25 +1,16 @@
-
 export interface Client {
   id: string;
   nome: string;
   telefone: string;
   email: string;
-  ativo: boolean;
-  notas?: string;
-  createdAt: string;
 }
 
 export interface Vehicle {
-  id: string; // Mantido ID interno para integridade, mas Placa é visualmente a chave
+  id: string;
   placa: string;
   modelo: string;
-  ano?: string;
-  marca?: string;
   clienteId: string;
-  kmEntrada: number; // KM inicial de cadastro
-  kmAtual: number; // KM atualizado pelas OS
-  historicoKm: { data: string; km: number; origem: string }[];
-  notas?: string;
+  kmEntrada: number;
   dataUltimaManutencao: string;
   kmProximaManutencao: number;
 }
@@ -34,60 +25,33 @@ export interface Part {
 
 export interface UsedPart {
   partId: string;
-  nomePeca: string;
+  nomePeca: string; // Snapshot name in case part is deleted/changed later
   quantidade: number;
-  valorUnitarioSnapshot: number;
-}
-
-export interface ServiceItem {
-  id: string;
-  nome: string; // Ex: "Troca de Óleo"
-  valor: number;
+  valorUnitarioSnapshot: number; // Snapshot price
 }
 
 export interface ServiceOrder {
   id: string;
   clienteId: string;
   veiculoId: string;
-  kmNoServico: number;
   pecasUsadas: UsedPart[];
-  servicos: ServiceItem[];
   valorTotal: number;
   data: string;
-  status: 'ABERTA' | 'CONCLUIDA' | 'CANCELADA';
-  mecanico?: string;
-  notas?: string;
-}
-
-export interface MaintenanceRule {
-  id: string;
-  nomeServico: string; // Deve bater com o nome do serviço na OS
-  intervaloKm: number;
-  avisoAntesKm: number;
+  status: 'ABERTA' | 'CONCLUIDA';
 }
 
 export interface Log {
   id: string;
   timestamp: string;
-  acao: 'CRIACAO' | 'EDICAO' | 'EXCLUSAO' | 'CONFIG';
-  entidade: 'CLIENTE' | 'VEICULO' | 'ESTOQUE' | 'OS' | 'REGRA';
+  acao: 'CRIACAO' | 'EDICAO' | 'EXCLUSAO';
+  entidade: 'CLIENTE' | 'VEICULO' | 'ESTOQUE' | 'OS';
   detalhes: string;
 }
 
 export interface Alert {
   id: string;
   type: 'ESTOQUE' | 'MANUTENCAO';
-  severity: 'info' | 'warning' | 'critical';
+  severity: 'warning' | 'critical';
   message: string;
-  veiculoId?: string;
-  regraId?: string;
-}
-
-export interface DashboardMetrics {
-  faturamentoTotal: number;
-  faturamentoMes: number;
-  osAbertas: number;
-  osConcluidas: number;
-  ticketMedio: number;
-  topServicos: { nome: string; qtd: number }[];
+  entityId?: string;
 }
