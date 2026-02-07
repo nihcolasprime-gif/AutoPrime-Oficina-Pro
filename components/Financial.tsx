@@ -26,14 +26,15 @@ export const Financial = () => {
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // --- Logic ---
+  // --- LÓGICA CORRIGIDA ---
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      // Ajuste para garantir que a data seja comparada corretamente (string vs object)
       const tDate = new Date(t.data);
-      // Usando UTC para evitar problemas de fuso horário voltando 1 dia
-      const tMonth = tDate.getUTCMonth(); 
-      const tYear = tDate.getUTCFullYear();
+      
+      // CORREÇÃO DE FUSO: Usamos getMonth() (Local) ao invés de getUTCMonth()
+      // Isso garante que dia 31/10 às 22h continue sendo Outubro para você.
+      const tMonth = tDate.getMonth(); 
+      const tYear = tDate.getFullYear();
       
       return tMonth === currentDate.getMonth() && 
              tYear === currentDate.getFullYear();
@@ -41,13 +42,14 @@ export const Financial = () => {
   }, [transactions, currentDate]);
 
   const summary = useMemo(() => {
+    // CORREÇÃO DE TIPO: Forçamos Number() para evitar erro de concatenação de string
     const income = filteredTransactions
         .filter(t => t.tipo === 'RECEITA')
-        .reduce((acc, t) => acc + t.valor, 0);
+        .reduce((acc, t) => acc + Number(t.valor), 0);
     
     const expense = filteredTransactions
         .filter(t => t.tipo === 'DESPESA')
-        .reduce((acc, t) => acc + t.valor, 0);
+        .reduce((acc, t) => acc + Number(t.valor), 0);
 
     return { income, expense, balance: income - expense };
   }, [filteredTransactions]);
@@ -58,12 +60,17 @@ export const Financial = () => {
   const handleOpenModal = (transaction?: Transaction) => {
     if (transaction) {
       setEditingTransaction(transaction);
+      // Tenta extrair a data correta para o input YYYY-MM-DD
+      const dateObj = new Date(transaction.data);
+      // Ajuste para pegar a data local correta string formatada
+      const localDateStr = dateObj.toLocaleDateString('en-CA'); // en-CA retorna YYYY-MM-DD local
+
       setFormData({
         descricao: transaction.descricao,
         tipo: transaction.tipo,
         valor: transaction.valor,
         categoria: transaction.categoria,
-        data: transaction.data.split('T')[0]
+        data: localDateStr
       });
     } else {
       setEditingTransaction(null);
@@ -76,11 +83,14 @@ export const Financial = () => {
     e.preventDefault();
     if (formData.valor <= 0 || !formData.descricao) return;
 
-    // Garante que salvamos a data mantendo o dia selecionado
+    // Ao salvar, criamos uma data com hora fixa (12:00) para evitar que
+    // fusos horários negativos (como Brasil -3h) joguem a data para o dia anterior
+    const safeDate = new Date(formData.data + 'T12:00:00');
+
     const payload = {
         ...formData,
-        // Adiciona hora fixa meio-dia UTC para evitar bug de fuso -3h virar dia anterior
-        data: new Date(formData.data + 'T12:00:00Z').toISOString()
+        valor: Number(formData.valor), // Garante número ao salvar
+        data: safeDate.toISOString()
     };
 
     if (editingTransaction) {
@@ -95,13 +105,13 @@ export const Financial = () => {
 
   const formatMoney = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   
-  // Função auxiliar para exibir dia corretamente
+  // Helper para exibir dia corretamente no Card Mobile
   const getDay = (isoDate: string) => {
       const d = new Date(isoDate);
-      return d.getUTCDate().toString().padStart(2, '0');
+      return d.getDate().toString().padStart(2, '0');
   };
 
-  // Visual Helpers
+  // Cores das Categorias
   const getCategoryConfig = (cat: string) => {
     switch(cat) {
         case 'ALUGUEL': return { icon: Home, color: 'bg-purple-100 text-purple-700 border-purple-200' };
@@ -114,9 +124,9 @@ export const Financial = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
+    <div className="space-y-6 animate-fade-in pb-24 md:pb-0">
       
-      {/* Header & Date Navigation - Melhorado para Mobile */}
+      {/* Header & Navegação - Otimizado para Mobile */}
       <div className="flex flex-col xl:flex-row justify-between items-center gap-4">
         <div className="w-full xl:w-auto text-center xl:text-left">
             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 flex items-center justify-center xl:justify-start gap-3">
@@ -152,9 +162,9 @@ export const Financial = () => {
         </div>
       </div>
 
-      {/* Cards Dashboard - Preservado cores e estilo */}
+      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        {/* Income */}
+        {/* Entradas */}
         <div className="relative overflow-hidden rounded-2xl p-5 md:p-6 text-white shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-700">
             <div className="absolute top-0 right-0 p-4 opacity-20"><TrendingUp size={80} /></div>
             <div className="relative z-10">
@@ -166,7 +176,7 @@ export const Financial = () => {
             </div>
         </div>
 
-        {/* Expense */}
+        {/* Saídas */}
         <div className="relative overflow-hidden rounded-2xl p-5 md:p-6 text-white shadow-lg bg-gradient-to-br from-rose-500 to-rose-700">
             <div className="absolute top-0 right-0 p-4 opacity-20"><TrendingDown size={80} /></div>
             <div className="relative z-10">
@@ -178,20 +188,20 @@ export const Financial = () => {
             </div>
         </div>
 
-        {/* Balance */}
+        {/* Balanço */}
         <div className={`relative overflow-hidden rounded-2xl p-5 md:p-6 text-white shadow-lg bg-gradient-to-br ${summary.balance >= 0 ? 'from-indigo-500 to-blue-700' : 'from-orange-500 to-red-600'}`}>
             <div className="absolute top-0 right-0 p-4 opacity-20"><Wallet size={80} /></div>
             <div className="relative z-10">
                 <div className="flex items-center gap-2 bg-white/20 w-fit px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 mb-3">
                     <DollarSign size={14} />
-                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">Resultado Mês</span>
+                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">Resultado</span>
                 </div>
                 <p className="text-3xl md:text-4xl font-black tracking-tight">{formatMoney(summary.balance)}</p>
             </div>
         </div>
       </div>
 
-      {/* Transactions List */}
+      {/* Lista de Transações */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
             <h2 className="font-bold text-lg md:text-xl text-slate-800 flex items-center gap-2">
@@ -270,12 +280,12 @@ export const Financial = () => {
                             <div key={t.id} className="p-4 flex flex-col gap-3 active:bg-slate-50 transition-colors">
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${t.tipo === 'RECEITA' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                                            <span className="font-bold text-sm">{getDay(t.data)}</span>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-slate-100 ${t.tipo === 'RECEITA' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                            <span className="font-black text-sm">{getDay(t.data)}</span>
                                         </div>
                                         <div>
                                             <p className="font-bold text-slate-800 leading-tight line-clamp-1">{t.descricao}</p>
-                                            <div className="flex items-center gap-2 mt-1">
+                                            <div className="flex items-center gap-2 mt-1.5">
                                                 <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${CatConfig.color}`}>
                                                     <CatIcon size={10} /> {t.categoria}
                                                 </span>
@@ -290,11 +300,11 @@ export const Financial = () => {
                                     </div>
                                 </div>
                                 
-                                <div className="flex justify-end gap-3 pt-2 border-t border-slate-50">
-                                    <button onClick={() => handleOpenModal(t)} className="text-xs font-bold text-slate-400 hover:text-brand-600 flex items-center gap-1 px-2 py-1">
+                                <div className="flex justify-end gap-4 pt-2 border-t border-slate-50 mt-1">
+                                    <button onClick={() => handleOpenModal(t)} className="text-xs font-bold text-slate-500 hover:text-brand-600 flex items-center gap-1.5 px-2 py-1">
                                         <Edit2 size={14} /> Editar
                                     </button>
-                                    <button onClick={() => { if (confirm('Excluir lançamento?')) deleteTransaction(t.id); }} className="text-xs font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 px-2 py-1">
+                                    <button onClick={() => { if (confirm('Excluir lançamento?')) deleteTransaction(t.id); }} className="text-xs font-bold text-slate-500 hover:text-rose-600 flex items-center gap-1.5 px-2 py-1">
                                         <Trash2 size={14} /> Excluir
                                     </button>
                                 </div>
