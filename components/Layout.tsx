@@ -18,35 +18,36 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const criticalAlerts = alerts.filter(a => a.severity === 'critical').length;
 
   return (
-    <div className="flex min-h-screen relative overflow-hidden bg-slate-100">
+    // ADICIONEI 'flex-row' EXPLICITAMENTE E 'h-screen' PARA TRAVAR A TELA
+    <div className="flex flex-row h-screen w-full bg-slate-100 overflow-hidden relative">
       
-      {/* Background Blobs para efeito de vidro */}
+      {/* Background Blobs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-prime-blue/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
         <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-prime-light/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-32 left-20 w-96 h-96 bg-prime-yellow/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Sidebar Desktop - Glassmorphism Prism */}
-      <aside className="w-72 relative z-20 flex-shrink-0 hidden md:flex flex-col shadow-2xl transition-all duration-300">
+      {/* Sidebar Desktop - SÓ APARECE EM TELAS MÉDIAS PRA CIMA (md:flex) */}
+      <aside className="w-72 hidden md:flex flex-col relative z-20 shadow-2xl h-full transition-all duration-300">
         
-        {/* Camada de vidro */}
+        {/* Vidro e Fundo */}
         <div className="absolute inset-0 bg-gradient-to-b from-prime-blue/90 to-sky-900/90 backdrop-blur-xl border-r border-white/10"></div>
 
-        {/* Logo Section 3D */}
+        {/* Logo Section */}
         <div className="p-6 pb-8 text-center relative z-30 border-b border-white/10 bg-black/5 perspective-1000">
-          <div className="flex items-center justify-center gap-1 mb-1 transform scale-110 animate-float preserve-3d">
-            <span className="font-black italic text-4xl tracking-tighter text-white drop-shadow-xl" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.3)', transform: 'translateZ(20px)' }}>
+          <div className="flex items-center justify-center gap-1 mb-1 preserve-3d">
+            <span className="font-black italic text-4xl tracking-tighter text-white drop-shadow-xl">
               PRIME
             </span>
-            <div className="relative mx-1" style={{ transform: 'translateZ(30px)' }}>
+            <div className="relative mx-1">
                  <Wrench className="text-prime-yellow fill-prime-yellow transform rotate-45 drop-shadow-lg" size={28} strokeWidth={2.5} />
             </div>
-            <span className="font-script text-5xl text-prime-yellow drop-shadow-xl" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.3)', transform: 'translateZ(20px)' }}>
+            <span className="font-script text-5xl text-prime-yellow drop-shadow-xl">
               Car
             </span>
           </div>
-          <p className="text-white/80 font-bold text-lg tracking-wide mt-2 uppercase text-shadow-sm transform translate-z-10">
+          <p className="text-white/80 font-bold text-lg tracking-wide mt-2 uppercase text-shadow-sm">
             Mecânica do Dênis
           </p>
           <div className="mt-3 text-xs bg-white/10 backdrop-blur-md border border-white/20 text-prime-yellow font-bold py-1 px-4 rounded-full inline-block shadow-lg">
@@ -54,7 +55,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </div>
         
-        <nav className="flex-1 p-4 space-y-3 mt-2 relative z-30">
+        {/* Navegação */}
+        <nav className="flex-1 p-4 space-y-2 mt-2 relative z-30 overflow-y-auto custom-scrollbar">
           {menuItems.map(item => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -95,8 +97,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
       </aside>
 
-      {/* Mobile Header - Glass */}
-      <div className="md:hidden fixed top-0 w-full bg-prime-blue/90 backdrop-blur-lg text-white p-3 z-40 flex justify-between items-center shadow-lg border-b border-white/10">
+      {/* Mobile Header - SÓ APARECE EM MOBILE (md:hidden) */}
+      <div className="md:hidden fixed top-0 w-full bg-prime-blue/90 backdrop-blur-lg text-white p-3 z-50 flex justify-between items-center shadow-lg border-b border-white/10 h-16">
           <div className="flex items-center gap-2">
             <span className="font-black italic text-xl">PRIME</span>
             <span className="font-script text-2xl text-prime-yellow">Car</span>
@@ -114,9 +116,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 mt-16 md:mt-0 overflow-y-auto h-screen relative z-10 scroll-smooth">
-        <div className="max-w-6xl mx-auto animate-fade-in pb-10">
+      {/* Main Content - Flex-1 pra ocupar o resto */}
+      <main className="flex-1 relative z-10 h-full overflow-y-auto scroll-smooth bg-slate-100">
+        <div className="p-4 md:p-8 mt-16 md:mt-0 pb-20 max-w-7xl mx-auto">
            {children}
         </div>
       </main>
