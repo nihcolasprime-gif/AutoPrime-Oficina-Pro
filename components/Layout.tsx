@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAutoPrime } from '../context/AutoPrimeContext';
-import { LayoutDashboard, Users, Car, Package, Wrench, Settings as SettingsIcon, Wallet } from 'lucide-react';
+import { LayoutDashboard, Users, Car, Package, Wrench, Wallet, BellRing } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentView, setCurrentView, alerts } = useAutoPrime();
@@ -12,7 +12,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { id: 'inventory', label: 'Estoque', icon: Package },
     { id: 'os', label: 'Ordens de Serviço', icon: Wrench },
     { id: 'financial', label: 'Financeiro', icon: Wallet },
-    { id: 'settings', label: 'Configurações', icon: SettingsIcon },
+    { id: 'settings', label: 'Alertas de Manutenção', icon: BellRing },
   ];
 
   const criticalAlerts = alerts.filter(a => a.severity === 'critical').length;

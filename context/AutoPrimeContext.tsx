@@ -36,6 +36,7 @@ interface AutoPrimeContextData {
   
   // Financial Actions
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  updateTransaction: (id: string, data: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   
   // PDF
@@ -74,7 +75,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [logs, setLogs] = useState<Log[]>(() => getInitialState('logs', []));
   const [currentView, setCurrentView] = useState<string>(() => getInitialState('currentView', 'dashboard'));
   
-  // Seed inicial para regras se estiver vazio
+  // Seed inicial para regras se estiver vazio (Mantido apenas para legado, mas o foco agora é manual)
   useEffect(() => {
     if (maintenanceRules.length === 0) {
         setMaintenanceRules([
@@ -119,57 +120,44 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     });
 
-    // Manutenção Inteligente
+    // Manutenção Inteligente (Baseada na Data Manual do Veículo)
     vehicles.forEach(vehicle => {
+      if (!vehicle.dataProximaManutencao) return;
+
       const client = clients.find(c => c.id === vehicle.clienteId);
+      const nextDate = new Date(vehicle.dataProximaManutencao);
       
-      maintenanceRules.forEach(rule => {
-        if (rule.veiculoId && rule.veiculoId !== vehicle.id) {
-            return;
-        }
+      const diffTime = nextDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Mensagem personalizada se houver nota
+      const baseMsg = vehicle.notas ? `Manutenção: ${vehicle.notas}` : 'Revisão Agendada';
 
-        const lastOS = serviceOrders
-          .filter(os => os.veiculoId === vehicle.id && os.status === 'CONCLUIDA' && os.servicos.some(s => s.nome === rule.nomeServico))
-          .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0];
-
-        let baseDateStr = lastOS ? lastOS.data : vehicle.dataUltimaManutencao;
-        if (!baseDateStr) baseDateStr = new Date().toISOString();
-
-        const baseDate = new Date(baseDateStr);
-        const nextDate = new Date(baseDate);
-        nextDate.setMonth(baseDate.getMonth() + rule.intervaloMeses);
-
-        const diffTime = nextDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 0) {
-          newAlerts.push({
-            id: `maint-crit-${vehicle.id}-${rule.id}`,
-            type: 'MANUTENCAO',
-            severity: 'critical',
-            message: `${rule.nomeServico} VENCIDO - ${vehicle.modelo} (${vehicle.placa})`,
-            veiculoId: vehicle.id,
-            regraId: rule.id,
-            clientName: client ? client.nome : 'Cliente Desconhecido',
-            clientPhone: client ? client.telefone : ''
-          });
-        } else if (diffDays <= 30) {
-          newAlerts.push({
-            id: `maint-warn-${vehicle.id}-${rule.id}`,
-            type: 'MANUTENCAO',
-            severity: 'warning',
-            message: `${rule.nomeServico} vence em ${diffDays} dias - ${vehicle.modelo}`,
-            veiculoId: vehicle.id,
-            regraId: rule.id,
-            clientName: client ? client.nome : 'Cliente Desconhecido',
-            clientPhone: client ? client.telefone : ''
-          });
-        }
-      });
+      if (diffDays < 0) {
+        newAlerts.push({
+          id: `maint-crit-${vehicle.id}`,
+          type: 'MANUTENCAO',
+          severity: 'critical',
+          message: `${baseMsg} - VENCIDA (${Math.abs(diffDays)}d) - ${vehicle.modelo} (${vehicle.placa})`,
+          veiculoId: vehicle.id,
+          clientName: client ? client.nome : 'Cliente Desconhecido',
+          clientPhone: client ? client.telefone : ''
+        });
+      } else if (diffDays <= 30) {
+        newAlerts.push({
+          id: `maint-warn-${vehicle.id}`,
+          type: 'MANUTENCAO',
+          severity: 'warning',
+          message: `${baseMsg} em ${diffDays} dias - ${vehicle.modelo} (${vehicle.placa})`,
+          veiculoId: vehicle.id,
+          clientName: client ? client.nome : 'Cliente Desconhecido',
+          clientPhone: client ? client.telefone : ''
+        });
+      }
     });
 
     return newAlerts;
-  }, [inventory, vehicles, maintenanceRules, serviceOrders, clients]);
+  }, [inventory, vehicles, clients]);
 
   // 2. Métricas Derivadas
   const metrics = useMemo<DashboardMetrics>(() => {
@@ -262,6 +250,11 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
     addLog('CRIACAO', 'FINANCEIRO', `${data.tipo}: ${data.descricao} (R$ ${data.valor})`);
   };
 
+  const updateTransaction = (id: string, data: Partial<Transaction>) => {
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+    addLog('EDICAO', 'FINANCEIRO', `Transação ${id} editada.`);
+  };
+
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
     addLog('EXCLUSAO', 'FINANCEIRO', `Transação ${id} removida.`);
@@ -337,6 +330,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Atualiza Veículo
     setVehicles(prev => prev.map(v => {
       if (v.id === data.veiculoId) {
+        // Cálculo automático de próxima data (6 meses por padrão ao fazer OS)
         const nextDate = new Date(data.data);
         nextDate.setMonth(nextDate.getMonth() + 6);
 
@@ -487,7 +481,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
       addPart, updatePart, deletePart,
       addMaintenanceRule, updateMaintenanceRule, deleteMaintenanceRule,
       addServiceOrder, deleteServiceOrder,
-      addTransaction, deleteTransaction,
+      addTransaction, updateTransaction, deleteTransaction,
       generateOSPDF
     }}>
       {children}
