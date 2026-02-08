@@ -40,7 +40,7 @@ export interface UsedPart {
 }
 
 export interface ServiceItem {
-  id: string;
+  id?: string; // Optional for compatibility, but should be generated
   nome: string; // Ex: "Troca de Óleo"
   valor: number;
 }

@@ -33,12 +33,12 @@ interface AutoPrimeContextData {
 
   addServiceOrder: (os: Omit<ServiceOrder, 'id' | 'valorTotal' | 'status'>) => void;
   deleteServiceOrder: (id: string) => void;
-  
+
   // Financial Actions
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   updateTransaction: (id: string, data: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
-  
+
   // PDF
   generateOSPDF: (osId: string) => void;
 }
@@ -50,7 +50,7 @@ export const useAutoPrime = () => useContext(AutoPrimeContext);
 // --- UTILITÁRIOS ---
 const generateUUID = (): string => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    try { return crypto.randomUUID(); } catch (e) {}
+    try { return crypto.randomUUID(); } catch (e) { }
   }
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 };
@@ -64,7 +64,7 @@ const getInitialState = <T,>(key: string, fallback: T): T => {
 };
 
 export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  
+
   // --- STATE (DATA-BRAIN STORAGE) ---
   const [clients, setClients] = useState<Client[]>(() => getInitialState('clients', []));
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => getInitialState('vehicles', []));
@@ -74,15 +74,15 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<Transaction[]>(() => getInitialState('transactions', []));
   const [logs, setLogs] = useState<Log[]>(() => getInitialState('logs', []));
   const [currentView, setCurrentView] = useState<string>(() => getInitialState('currentView', 'dashboard'));
-  
+
   // Seed inicial para regras se estiver vazio (Mantido apenas para legado, mas o foco agora é manual)
   useEffect(() => {
     if (maintenanceRules.length === 0) {
-        setMaintenanceRules([
-            { id: 'rule-1', nomeServico: 'Troca de Óleo', intervaloMeses: 6 },
-            { id: 'rule-2', nomeServico: 'Alinhamento', intervaloMeses: 12 },
-            { id: 'rule-3', nomeServico: 'Correia Dentada', intervaloMeses: 36 }
-        ]);
+      setMaintenanceRules([
+        { id: 'rule-1', nomeServico: 'Troca de Óleo', intervaloMeses: 6 },
+        { id: 'rule-2', nomeServico: 'Alinhamento', intervaloMeses: 12 },
+        { id: 'rule-3', nomeServico: 'Correia Dentada', intervaloMeses: 36 }
+      ]);
     }
   }, []);
 
@@ -102,7 +102,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   // --- ENGINE DE CÁLCULO (BRAIN) ---
-  
+
   // 1. Alertas Derivados
   const alerts = useMemo(() => {
     const newAlerts: Alert[] = [];
@@ -126,10 +126,10 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       const client = clients.find(c => c.id === vehicle.clienteId);
       const nextDate = new Date(vehicle.dataProximaManutencao);
-      
+
       const diffTime = nextDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       // Mensagem personalizada se houver nota
       const baseMsg = vehicle.notas ? `Manutenção: ${vehicle.notas}` : 'Revisão Agendada';
 
@@ -167,7 +167,7 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const osConcluidas = serviceOrders.filter(os => os.status === 'CONCLUIDA');
     const faturamentoTotal = osConcluidas.reduce((acc, os) => acc + os.valorTotal, 0);
-    
+
     const faturamentoMes = osConcluidas
       .filter(os => {
         const d = new Date(os.data);
@@ -223,12 +223,12 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
     const nextDate = new Date();
     nextDate.setMonth(nextDate.getMonth() + 6); // Default 6 meses
 
-    const newVehicle: Vehicle = { 
-      ...data, 
-      id: generateUUID(), 
-      kmAtual: data.kmEntrada, 
+    const newVehicle: Vehicle = {
+      ...data,
+      id: generateUUID(),
+      kmAtual: data.kmEntrada,
       dataProximaManutencao: nextDate.toISOString(),
-      historicoKm: [{ data: new Date().toISOString(), km: data.kmEntrada, origem: 'Cadastro' }] 
+      historicoKm: [{ data: new Date().toISOString(), km: data.kmEntrada, origem: 'Cadastro' }]
     };
     setVehicles(prev => [...prev, newVehicle]);
     addLog('CRIACAO', 'VEICULO', `Veículo ${newVehicle.placa} criado.`);
@@ -264,19 +264,19 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
   const addPart = (data: Omit<Part, 'id'>) => {
     const newPartId = generateUUID();
     const custoTotal = data.quantidadeAtual * data.valorUnitario;
-    
+
     setInventory(prev => [...prev, { ...data, id: newPartId }]);
-    
+
     // Gera despesa automática de compra de estoque
     if (custoTotal > 0) {
-        addTransaction({
-            descricao: `Compra Estoque: ${data.nomePeca}`,
-            tipo: 'DESPESA',
-            valor: custoTotal,
-            data: new Date().toISOString(),
-            categoria: 'ESTOQUE',
-            referenciaId: newPartId
-        });
+      addTransaction({
+        descricao: `Compra Estoque: ${data.nomePeca}`,
+        tipo: 'DESPESA',
+        valor: custoTotal,
+        data: new Date().toISOString(),
+        categoria: 'ESTOQUE',
+        referenciaId: newPartId
+      });
     }
 
     addLog('CRIACAO', 'ESTOQUE', `Peça ${data.nomePeca} adicionada.`);
@@ -316,8 +316,17 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
       ...data,
       id: generateUUID(),
       valorTotal: total,
-      status: 'CONCLUIDA'
+      status: 'CONCLUIDA' // TODO: Permitir 'ABERTA' futuramente
     };
+
+    // Verificação de Estoque (Segurança extra backend-like)
+    for (const partUsed of data.pecasUsadas) {
+      const item = inventory.find(i => i.id === partUsed.partId);
+      if (item && item.quantidadeAtual < partUsed.quantidade) {
+        alert(`ERRO CRÍTICO: Estoque insuficiente para ${item.nomePeca}. Operação cancelada.`);
+        return;
+      }
+    }
 
     setServiceOrders(prev => [...prev, newOS]);
 
@@ -340,20 +349,20 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
           kmAtual: newKm,
           dataUltimaManutencao: data.data,
           dataProximaManutencao: nextDate.toISOString(),
-          historicoKm: [...v.historicoKm, { data: data.data, km: data.kmNoServico, origem: `OS #${newOS.id.slice(0,4)}` }]
+          historicoKm: [...v.historicoKm, { data: data.data, km: data.kmNoServico, origem: `OS #${newOS.id.slice(0, 4)}` }]
         };
       }
       return v;
     }));
-    
+
     // Gera Receita Automática
     addTransaction({
-        descricao: `Receita OS #${newOS.id.slice(0,8)}`,
-        tipo: 'RECEITA',
-        valor: total,
-        data: data.data,
-        categoria: 'OS',
-        referenciaId: newOS.id
+      descricao: `Receita OS #${newOS.id.slice(0, 8)}`,
+      tipo: 'RECEITA',
+      valor: total,
+      data: data.data,
+      categoria: 'OS',
+      referenciaId: newOS.id
     });
 
     addLog('CRIACAO', 'OS', `OS ${newOS.id} gerada. Valor: ${total}`);
@@ -472,18 +481,23 @@ export const AutoPrimeProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
+
+  const contextValue = useMemo(() => ({
+    clients, vehicles, inventory, serviceOrders, maintenanceRules, logs, alerts, metrics, transactions, currentView,
+    setCurrentView,
+    addClient, updateClient, deleteClient,
+    addVehicle, updateVehicle, deleteVehicle,
+    addPart, updatePart, deletePart,
+    addMaintenanceRule, updateMaintenanceRule, deleteMaintenanceRule,
+    addServiceOrder, deleteServiceOrder,
+    addTransaction, updateTransaction, deleteTransaction,
+    generateOSPDF
+  }), [
+    clients, vehicles, inventory, serviceOrders, maintenanceRules, logs, alerts, metrics, transactions, currentView
+  ]);
+
   return (
-    <AutoPrimeContext.Provider value={{
-      clients, vehicles, inventory, serviceOrders, maintenanceRules, logs, alerts, metrics, transactions, currentView,
-      setCurrentView,
-      addClient, updateClient, deleteClient,
-      addVehicle, updateVehicle, deleteVehicle,
-      addPart, updatePart, deletePart,
-      addMaintenanceRule, updateMaintenanceRule, deleteMaintenanceRule,
-      addServiceOrder, deleteServiceOrder,
-      addTransaction, updateTransaction, deleteTransaction,
-      generateOSPDF
-    }}>
+    <AutoPrimeContext.Provider value={contextValue}>
       {children}
     </AutoPrimeContext.Provider>
   );
