@@ -1,49 +1,105 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+    --font-sans: Montserrat, sans-serif;
+    --font-script: Yellowtail, cursive;
+
+    --color-prime-blue: #003366;
+    --color-prime-light: #00AEEF;
+    --color-prime-yellow: #FFD700;
+    --color-prime-dark: #0f172a;
+
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-500: #3b82f6;
+    --color-brand-600: #003366;
+    --color-brand-700: #1d4ed8;
+    --color-brand-800: #1e40af;
+    --color-brand-900: #1e3a8a;
+
+    --animate-float: float 6s ease-in-out infinite;
+    --animate-blob: blob 7s infinite;
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes blob {
+        0% {
+            transform: translate(0px, 0px) scale(1);
+        }
+
+        33% {
+            transform: translate(30px, -50px) scale(1.1);
+        }
+
+        66% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+
+        100% {
+            transform: translate(0px, 0px) scale(1);
+        }
+    }
+}
 
 /* Utilitários 3D Personalizados */
 .perspective-1000 {
-perspective: 1000px;
+    perspective: 1000px;
 }
+
 .preserve-3d {
-transform-style: preserve-3d;
+    transform-style: preserve-3d;
 }
+
 .backface-hidden {
-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
+
 .rotate-y-180 {
-transform: rotateY(180deg);
+    transform: rotateY(180deg);
 }
 
 /* Glassmorphism Refinado */
 .glass-panel {
-background: rgba(255, 255, 255, 0.7);
-backdrop-filter: blur(12px);
--webkit-backdrop-filter: blur(12px);
-border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .glass-card-hover {
-transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
 .glass-card-hover:hover {
-transform: translateY(-5px) scale(1.02) rotateX(2deg);
-box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15);
-border-color: rgba(255, 255, 255, 0.8);
+    transform: translateY(-5px) scale(1.02) rotateX(2deg);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.8);
 }
 
 /* Scrollbar estilizada para combinar com vidro */
 ::-webkit-scrollbar {
-width: 8px;
+    width: 8px;
 }
+
 ::-webkit-scrollbar-track {
-background: rgba(0,0,0,0.05);
+    background: rgba(0, 0, 0, 0.05);
 }
+
 ::-webkit-scrollbar-thumb {
-background: rgba(0, 51, 102, 0.3);
-border-radius: 4px;
+    background: rgba(0, 51, 102, 0.3);
+    border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-background: rgba(0, 51, 102, 0.6);
+    background: rgba(0, 51, 102, 0.6);
 }
