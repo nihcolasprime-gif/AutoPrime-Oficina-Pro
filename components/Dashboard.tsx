@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useAutoPrime } from '../scr/context/AutoPrimeContext';
+import { useAutoPrime } from '../src/context/AutoPrimeContext';
 import { AlertTriangle, Users, Car, Wrench, DollarSign, Activity, ArrowRight, User, Phone, Calendar as CalendarIcon } from 'lucide-react';
 
 export const Dashboard = () => {
