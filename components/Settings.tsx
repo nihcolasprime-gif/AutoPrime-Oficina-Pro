@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../context/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { BellRing, Calendar, Save, Car, AlertTriangle, CheckCircle, Clock, Search, ArrowRight } from 'lucide-react';
 
 export const Settings = () => {
