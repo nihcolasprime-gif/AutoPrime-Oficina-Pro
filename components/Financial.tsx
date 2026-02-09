@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../src/lib/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
 import { 
   TrendingUp, TrendingDown, Wallet, Calendar, Plus, Trash2, Edit2, 
@@ -30,9 +30,6 @@ export const Financial = () => {
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       const tDate = new Date(t.data);
-      
-      // CORREÇÃO DE FUSO: Usamos getMonth() (Local) ao invés de getUTCMonth()
-      // Isso garante que dia 31/10 às 22h continue sendo Outubro para você.
       const tMonth = tDate.getMonth(); 
       const tYear = tDate.getFullYear();
       
@@ -42,7 +39,6 @@ export const Financial = () => {
   }, [transactions, currentDate]);
 
   const summary = useMemo(() => {
-    // CORREÇÃO DE TIPO: Forçamos Number() para evitar erro de concatenação de string
     const income = filteredTransactions
         .filter(t => t.tipo === 'RECEITA')
         .reduce((acc, t) => acc + Number(t.valor), 0);
@@ -60,10 +56,8 @@ export const Financial = () => {
   const handleOpenModal = (transaction?: Transaction) => {
     if (transaction) {
       setEditingTransaction(transaction);
-      // Tenta extrair a data correta para o input YYYY-MM-DD
       const dateObj = new Date(transaction.data);
-      // Ajuste para pegar a data local correta string formatada
-      const localDateStr = dateObj.toLocaleDateString('en-CA'); // en-CA retorna YYYY-MM-DD local
+      const localDateStr = dateObj.toLocaleDateString('en-CA'); 
 
       setFormData({
         descricao: transaction.descricao,
@@ -83,13 +77,11 @@ export const Financial = () => {
     e.preventDefault();
     if (formData.valor <= 0 || !formData.descricao) return;
 
-    // Ao salvar, criamos uma data com hora fixa (12:00) para evitar que
-    // fusos horários negativos (como Brasil -3h) joguem a data para o dia anterior
     const safeDate = new Date(formData.data + 'T12:00:00');
 
     const payload = {
         ...formData,
-        valor: Number(formData.valor), // Garante número ao salvar
+        valor: Number(formData.valor),
         data: safeDate.toISOString()
     };
 
@@ -105,13 +97,11 @@ export const Financial = () => {
 
   const formatMoney = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   
-  // Helper para exibir dia corretamente no Card Mobile
   const getDay = (isoDate: string) => {
       const d = new Date(isoDate);
       return d.getDate().toString().padStart(2, '0');
   };
 
-  // Cores das Categorias
   const getCategoryConfig = (cat: string) => {
     switch(cat) {
         case 'ALUGUEL': return { icon: Home, color: 'bg-purple-100 text-purple-700 border-purple-200' };
@@ -126,7 +116,7 @@ export const Financial = () => {
   return (
     <div className="space-y-6 animate-fade-in pb-24 md:pb-0">
       
-      {/* Header & Navegação - Otimizado para Mobile */}
+      {/* Header & Navegação */}
       <div className="flex flex-col xl:flex-row justify-between items-center gap-4">
         <div className="w-full xl:w-auto text-center xl:text-left">
             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 flex items-center justify-center xl:justify-start gap-3">
@@ -368,7 +358,8 @@ export const Financial = () => {
                             min="0.01"
                             step="0.01" 
                             className="w-full pl-10 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-800"
-                            value={formData.valor}
+                            /* AQUI ESTÁ A CORREÇÃO */
+                            value={formData.valor === 0 ? '' : formData.valor}
                             onChange={e => setFormData({...formData, valor: Number(e.target.value)})}
                         />
                     </div>
