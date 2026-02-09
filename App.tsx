@@ -1,5 +1,5 @@
 import React from 'react';
-import { AutoPrimeProvider, useAutoPrime } from './src/context/AutoPrimeContext';
+import { AutoPrimeProvider, useAutoPrime } from './src/lib/AutoPrimeContext';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Clients } from './components/Clients';
