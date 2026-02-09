@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../scr/context/AutoPrimeContext';
+import { useAutoPrime } from '../src/context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
 import { Plus, Edit2, Trash2, Calendar, User, Clock, Search, Car, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
 import { Vehicle } from '../types';
