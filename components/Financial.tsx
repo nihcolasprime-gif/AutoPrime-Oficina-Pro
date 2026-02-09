@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../context/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
 import { 
   TrendingUp, TrendingDown, Wallet, Calendar, Plus, Trash2, Edit2, 
