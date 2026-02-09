@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, ReactNo
 import { Client, Vehicle, Part, ServiceOrder, Log, Alert, MaintenanceRule, DashboardMetrics, Transaction } from '../types';
 // Importa o cliente que criamos (ajuste o caminho se criou em src/supabase.ts ou src/lib/supabase.ts)
 // Se criou na pasta lib:
-import { supabase } from '../scr/lib/supabase';
+import { supabase } from '../src/lib/supabase';
 // Se criou direto na src, mude para '../supabase'
 
 interface AutoPrimeContextData {
