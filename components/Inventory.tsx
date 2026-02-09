@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../src/lib/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
 import { Plus, Edit2, Trash2, Package, AlertTriangle, Search, TrendingUp, AlertCircle, Box } from 'lucide-react';
 import { Part } from '../types';
@@ -86,7 +86,6 @@ export const Inventory = () => {
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Cards iguais ao anterior, mantendo consistência */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
               <div className="p-3 bg-blue-50 text-brand-600 rounded-lg"><Box size={24} /></div>
               <div>
@@ -124,7 +123,7 @@ export const Inventory = () => {
           />
       </div>
 
-      {/* Inventory Table - CORREÇÃO VISUAL DOS BOTÕES */}
+      {/* Inventory Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -193,7 +192,6 @@ export const Inventory = () => {
                                     {formatCurrency(part.quantidadeAtual * part.valorUnitario)}
                                 </td>
                                 
-                                {/* BOTÕES DE AÇÃO - GARANTINDO VISIBILIDADE */}
                                 <td className="p-5 text-right">
                                     <div className="flex justify-center gap-2">
                                         <button 
@@ -248,8 +246,9 @@ export const Inventory = () => {
                     type="number" 
                     min="0"
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-800"
-                    value={formData.quantidadeMinima === 0 ? '' : formData.quantidadeMinima}
-                    onChange={e => setFormData({...formData, quantidadeMinima: Number(e.target.value)})}
+                    /* AQUI ESTÁ A CORREÇÃO */
+                    value={formData.quantidadeAtual === 0 ? '' : formData.quantidadeAtual}
+                    onChange={e => setFormData({...formData, quantidadeAtual: Number(e.target.value)})}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold pointer-events-none">UN</div>
                 </div>
@@ -261,7 +260,8 @@ export const Inventory = () => {
                 type="number" 
                 min="0"
                 className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                value={formData.quantidadeMinima}
+                /* AQUI ESTÁ A CORREÇÃO */
+                value={formData.quantidadeMinima === 0 ? '' : formData.quantidadeMinima}
                 onChange={e => setFormData({...formData, quantidadeMinima: Number(e.target.value)})}
                 />
              </div>
@@ -277,7 +277,8 @@ export const Inventory = () => {
                   step="0.01"
                   min="0"
                   className="w-full pl-10 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-800"
-                  value={formData.valorUnitario}
+                  /* AQUI ESTÁ A CORREÇÃO */
+                  value={formData.valorUnitario === 0 ? '' : formData.valorUnitario}
                   onChange={e => setFormData({...formData, valorUnitario: Number(e.target.value)})}
                 />
             </div>
