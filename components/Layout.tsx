@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAutoPrime } from '../context/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { LayoutDashboard, Users, Car, Package, Wrench, Wallet, BellRing } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
