@@ -248,8 +248,8 @@ export const Inventory = () => {
                     type="number" 
                     min="0"
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-800"
-                    value={formData.quantidadeAtual}
-                    onChange={e => setFormData({...formData, quantidadeAtual: Number(e.target.value)})}
+                    value={formData.quantidadeMinima === 0 ? '' : formData.quantidadeMinima}
+                    onChange={e => setFormData({...formData, quantidadeMinima: Number(e.target.value)})}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold pointer-events-none">UN</div>
                 </div>
