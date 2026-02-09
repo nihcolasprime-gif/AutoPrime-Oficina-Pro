@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../src/lib/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
 import { Plus, Trash2, FileText, CheckCircle, Printer, Wrench, X, Search, DollarSign, Calendar, Car, User, ClipboardList } from 'lucide-react';
 import { UsedPart, ServiceItem, ServiceOrder } from '../types';
@@ -368,7 +368,9 @@ export const ServiceOrders = () => {
                             <label className="block text-sm font-medium text-slate-700 mb-1">Quilometragem Atual (KM)</label>
                             <input required type="number" min="0" className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-500"
                                 placeholder="Ex: 50000"
-                                value={kmNoServico} onChange={e => setKmNoServico(Number(e.target.value))} />
+                                /* AQUI ESTÁ A CORREÇÃO */
+                                value={kmNoServico === 0 ? '' : kmNoServico} 
+                                onChange={e => setKmNoServico(Number(e.target.value))} />
                         </div>
                     </div>
 
@@ -387,7 +389,9 @@ export const ServiceOrders = () => {
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">R$</span>
                                         <input type="number" placeholder="0,00" min="0" step="0.01"
                                             className="w-full pl-8 p-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none font-bold text-slate-700"
-                                            value={tempServiceValue} onChange={e => setTempServiceValue(Number(e.target.value))} />
+                                            /* AQUI ESTÁ A CORREÇÃO */
+                                            value={tempServiceValue === 0 ? '' : tempServiceValue} 
+                                            onChange={e => setTempServiceValue(Number(e.target.value))} />
                                     </div>
                                     <button type="button" onClick={handleAddService} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 font-bold shadow-md shadow-blue-200">
                                         <Plus size={16} />
@@ -431,7 +435,9 @@ export const ServiceOrders = () => {
                                         <input
                                             type="number" min="0" step="0.01"
                                             className="w-full pl-8 p-2 border border-slate-300 rounded-lg text-sm outline-none font-bold text-slate-700"
-                                            value={tempPartPrice} onChange={e => setTempPartPrice(Number(e.target.value))}
+                                            /* AQUI ESTÁ A CORREÇÃO */
+                                            value={tempPartPrice === 0 ? '' : tempPartPrice} 
+                                            onChange={e => setTempPartPrice(Number(e.target.value))}
                                             placeholder="Preço"
                                         />
                                     </div>
