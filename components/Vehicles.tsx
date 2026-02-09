@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAutoPrime } from '../src/lib/AutoPrimeContext';
+import { useAutoPrime } from '../scr/context/AutoPrimeContext';
 import { Modal } from './ui/Modal';
 import { Plus, Edit2, Trash2, Calendar, User, Clock, Search, Car, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
 import { Vehicle } from '../types';
@@ -259,7 +259,9 @@ export const Vehicles = () => {
                     <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input required type="number" min="0"
                     className="w-full pl-10 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                    value={formData.kmEntrada} onChange={e => setFormData({...formData, kmEntrada: Number(e.target.value)})} />
+                    /* AQUI ESTÁ A CORREÇÃO */
+                    value={formData.kmEntrada === 0 ? '' : formData.kmEntrada} 
+                    onChange={e => setFormData({...formData, kmEntrada: Number(e.target.value)})} />
                 </div>
             </div>
             <div>
